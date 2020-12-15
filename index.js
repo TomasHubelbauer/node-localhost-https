@@ -6,15 +6,15 @@ import https from 'https';
 const platforms = { win32: 'windows' };
 const archs = { x64: 'amd64' };
 
-export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | 'version' | 'redirect' | 'download' | 'write' | 'mod' | 'run') => Promise<void>} */ progress) {
-  await progress('read');
+export default async function*() {
+  yield 'read';
   
   // Serve the certificates directly if they are already downloaded
   try {
     const key = await fs.promises.readFile('localhost-key.pem');
     const cert = await fs.promises.readFile('localhost.pem');
-    await progress('return');
-    return { key, cert };
+    yield { key, cert };
+    return;
   }
   catch (error) {
     if (error.code !== 'ENOENT') {
@@ -22,14 +22,14 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
     }
   }
 
-  await progress('touch');
+  yield 'touch';
   try {
     await fs.promises.access('mkcert');
   }
 
   // Swallow error as we proceed to download mkcert
   catch (error) {
-    progress('version');
+    yield 'version';
     
     // Fetch the information of the latest `mkcert` version
     const data = await new Promise((resolve, reject) => {
@@ -55,7 +55,7 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
     const asset = data.assets.find(asset => asset.name.endsWith(name));
 
     // Fetch the download URL from the redirect page
-    await progress('redirect');
+    yield 'redirect';
     const text = await new Promise((resolve, reject) => {
       const request = https.get(asset.browser_download_url, async response => {
         request.on('error', reject);
@@ -76,7 +76,7 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
     const url = match.groups.url.replace(/&amp;/g, '&');
 
     // Download the executable binary
-    await progress('download');
+    yield 'download';
     const buffer = await new Promise((resolve, reject) => {
       const request = https.get(url, async response => {
         request.on('error', reject);
@@ -92,13 +92,13 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
       });
     });
     
-    await progress('write');
+    yield 'write';
     await fs.promises.writeFile('mkcert', buffer);
   }
 
   // Make mkcert executable if it is not already (e.g. right after download)
   if (process.platform !== 'win32') {
-    await progress('mod');
+    yield 'mod';
     const mod = await util.promisify(child_process.exec)('chmod +x mkcert', { cwd: '.' });
 
     if (mod.stderr) {
@@ -111,7 +111,7 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
   }
 
   // Run mkcert executable to obtain localhost certificates
-  await progress('run');
+  yield 'run';
   const run = await util.promisify(child_process.exec)('./mkcert localhost', { cwd: '.' });
 
   if (!run.stderr.match(/The certificate is at ".\/localhost.pem" and the key at ".\/localhost-key.pem"/)) {
@@ -124,6 +124,5 @@ export default async function(/** @type {(stage: 'read' | 'return' | 'touch' | '
 
   const key = await fs.promises.readFile('localhost-key.pem');
   const cert = await fs.promises.readFile('localhost.pem');
-  await progress('return');
-  return { key, cert };
+  yield { key, cert };
 }
