@@ -18,6 +18,17 @@ import certify from './node-localhost-https/index.js';
 /** @type {string | http.ServerOptions} */
 let options;
 
+const stateMessages = {
+  read: 'Reading certificate files off the storage if any…',
+  touch: 'Checking if mkcert is already available in storage…',
+  version: 'Fetching the latest version of mkcert available…',
+  redirect: 'Obtaining the direct mkcert download address…',
+  download: 'Downloading the latest mkcert version available…',
+  write: 'Storing the downloaded mkcert binary in the storage…',
+  mod: 'Making mkcert executable in order to invoke it…',
+  run: 'Generating localhost certificates using mkcert…',
+};
+
 http
   .createServer((request, response) => {
     if (request.method !== 'GET') {
@@ -27,43 +38,12 @@ http
       return;
     }
 
-    switch (options) {
-      case 'read': {
-        response.end('Reading certificate files off the storage if any…');
-        return;
-      }
-      case 'touch': {
-        response.end('Checking if mkcert is already available in storage…');
-        return;
-      }
-      case 'version': {
-        response.end('Fetching the latest version of mkcert available…');
-        return;
-      }
-      case 'redirect': {
-        response.end('Obtaining the direct mkcert download address…');
-        return;
-      }
-      case 'download': {
-        response.end('Downloading the latest mkcert version available…');
-        return;
-      }
-      case 'write': {
-        response.end('Storing the downloaded mkcert binary in the storage…');
-        return;
-      }
-      case 'mod': {
-        response.end('Making mkcert executable in order to invoke it…');
-        return;
-      }
-      case 'run': {
-        response.end('Generating localhost certificates using mkcert…');
-        return;
-      }
+    const message = stateMessages[options];
+    if (message) {
+      response.writeHead(302, { Location: 'https://localhost' + request.url });
     }
 
-    response.writeHead(302, { Location: 'https://localhost' + request.url });
-    response.end();
+    response.end(message);
   })
   .listen(80, () => console.log('http://localhost'))
   ;
