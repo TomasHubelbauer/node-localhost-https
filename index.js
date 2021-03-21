@@ -1,14 +1,17 @@
-import fs from 'fs';
-import util from 'util';
 import child_process from 'child_process';
+import fs from 'fs';
 import https from 'https';
+import util from 'util';
 
+/** @type {{[key: string]: string;}} */
 const platforms = { win32: 'windows' };
+
+/** @type {{[key: string]: string;}} */
 const archs = { x64: 'amd64' };
 
-export default async function*() {
+export default async function* () {
   yield 'read';
-  
+
   // Serve the certificates directly if they are already downloaded
   try {
     const key = await fs.promises.readFile('localhost-key.pem');
@@ -30,7 +33,7 @@ export default async function*() {
   // Swallow error as we proceed to download mkcert
   catch (error) {
     yield 'version';
-    
+
     // Fetch the information of the latest `mkcert` version
     const data = await new Promise((resolve, reject) => {
       const request = https.get('https://api.github.com/repos/FiloSottile/mkcert/releases/latest', { headers: { 'User-Agent': '@tomashubelbauer' } }, async response => {
@@ -41,18 +44,18 @@ export default async function*() {
         for await (const chunk of response) {
           buffers.push(chunk);
         }
-    
+
         const buffer = Buffer.concat(buffers);
-        resolve(JSON.parse(buffer));
+        resolve(JSON.parse(buffer.toString()));
       });
     });
 
     const platform = platforms[process.platform] || process.platform;
     const arch = archs[process.arch] || process.arch;
     const name = platform + '-' + arch;
-    
+
     // Find the release asset for this platform and architecture using the `mkcert` naming convention
-    const asset = data.assets.find(asset => asset.name.endsWith(name));
+    const asset = data.assets.find((/** @type {{name: string;}} */ asset) => asset.name.endsWith(name));
 
     // Fetch the download URL from the redirect page
     yield 'redirect';
@@ -65,7 +68,7 @@ export default async function*() {
         for await (const chunk of response) {
           buffers.push(chunk);
         }
-    
+
         const buffer = Buffer.concat(buffers);
         resolve(buffer.toString());
       });
@@ -73,6 +76,10 @@ export default async function*() {
 
     const regex = /^<html><body>You are being <a href="(?<url>.*)">redirected<\/a>.<\/body><\/html>$/g;
     const match = regex.exec(text);
+    if (!match?.groups?.url) {
+      throw new Error('The redirect URL was not found in the response!');
+    }
+
     const url = match.groups.url.replace(/&amp;/g, '&');
 
     // Download the executable binary
@@ -86,12 +93,12 @@ export default async function*() {
         for await (const chunk of response) {
           buffers.push(chunk);
         }
-    
+
         const buffer = Buffer.concat(buffers);
         resolve(buffer);
       });
     });
-    
+
     yield 'write';
     await fs.promises.writeFile('mkcert', buffer);
   }
