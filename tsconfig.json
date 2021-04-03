@@ -13,6 +13,8 @@
     // Turn on all diagnostics for improving code quality
     "strict": true,
     // Make TypeScript resolve modules using ESM
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    // Allow importing built-in Node modules using default export
+    "allowSyntheticDefaultImports": true
   }
 }

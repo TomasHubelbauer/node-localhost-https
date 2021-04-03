@@ -3,10 +3,10 @@ import fs from 'fs';
 import https from 'https';
 import util from 'util';
 
-/** @type {{[key: string]: string;}} */
+/** @type {Record<string, string>}} */
 const platforms = { win32: 'windows' };
 
-/** @type {{[key: string]: string;}} */
+/** @type {Record<string, string>}} */
 const archs = { x64: 'amd64' };
 
 export default async function* () {
@@ -55,7 +55,7 @@ export default async function* () {
     const name = platform + '-' + arch;
 
     // Find the release asset for this platform and architecture using the `mkcert` naming convention
-    const asset = data.assets.find((/** @type {{name: string;}} */ asset) => asset.name.endsWith(name));
+    const asset = data.assets.find((/** @type {{ name: string; }} */ asset) => asset.name.endsWith(name));
 
     // Fetch the download URL from the redirect page
     yield 'redirect';
