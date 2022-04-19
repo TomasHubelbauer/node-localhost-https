@@ -2,18 +2,16 @@
 
 This script automatically issues localhost HTTPS certificates using mkcert.
 
-## Installation
+## Installation & Usage
 
-```
-git submodule add https://github.com/TomasHubelbauer/node-localhost-https
-```
+Use `--experimental-network-imports` with Node for HTTP(S) ESM URL support:
 
-## Usage
+https://nodejs.org/api/esm.html#https-and-http-imports
 
 ```js
 import http from 'https';
 import https from 'https';
-import certify from './node-localhost-https/index.js';
+import certify from 'https://tomashubelbauer.github.io/node-localhost-https/index.js';
 
 /** @type {string | http.ServerOptions} */
 let options;
@@ -77,7 +75,3 @@ https://github.com/FiloSottile/mkcert#installing-the-ca-on-other-systems
 You might want to implement logic which in the HTTP to HTTPS redirect offers the
 option to download the certificate for manual installation to the trust store or
 automatically places it there using `mkcert -install` before doing the redirect.
-
-## To-Do
-
-I think this is reasonably complete.
